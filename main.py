@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 import uuid
 
@@ -15,6 +16,9 @@ MQTT_BROKER_PORT = 1883
 running = True
 
 if __name__ == '__main__':
+
+    logging.basicConfig(filename='all.log', level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
 
     frontRight = 11
     frontLeft = 15
@@ -34,7 +38,7 @@ if __name__ == '__main__':
             data = payload.get('data')
             if data is not None:
                 cmd = data.get('cmd')
-                print("收到命令:" + cmd)
+                logging.debug("收到命令:" + cmd)
                 if cmd == "p":
                     running = False
                 elif cmd == "w":
@@ -50,7 +54,6 @@ if __name__ == '__main__':
 
 
     last_time = 0
-
 
     def on_my_disconnect(client, userdata, rc):
         global last_time
@@ -80,6 +83,6 @@ if __name__ == '__main__':
 
         time.sleep(1)
 
-    print("结束小车活动")
+    logging.info("结束小车活动")
     mqtt_client.disconnect()
     del car
