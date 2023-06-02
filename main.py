@@ -4,10 +4,11 @@ import uuid
 
 from mycar import MyCar
 from myclient import MyClient
+
 DEVICE_CODE = "WSCPCG100000001"
 PRODUCT_KEY = "49KaPBUogOO7"
-MQTT_USERNAME = ""
-MQTT_PASSWORD = ""
+MQTT_USERNAME = "wesine"
+MQTT_PASSWORD = "wesine"
 MQTT_BROKER_HOST = "58.49.184.55"
 MQTT_BROKER_PORT = 1883
 
@@ -20,9 +21,9 @@ if __name__ == '__main__':
     backRight = 12
     backLeft = 13
 
-
     car = MyCar(frontLeft, frontRight, backLeft, backRight)
     mqtt_client = MyClient(MQTT_BROKER_HOST, MQTT_BROKER_PORT, DEVICE_CODE, MQTT_USERNAME, MQTT_PASSWORD)
+
 
     def on_message_callback(client, userdata, message):
         global running
@@ -32,7 +33,6 @@ if __name__ == '__main__':
         if topic is not None and payload is not None:
             data = payload.get('data')
             if data is not None:
-                # forward,backward,toLeft, toRight, stop
                 cmd = data.get('cmd')
                 print("收到命令:" + cmd)
                 if cmd == "p":
@@ -48,7 +48,9 @@ if __name__ == '__main__':
                 elif cmd == "n":
                     car.stop()
 
+
     last_time = 0
+
 
     def on_my_disconnect(client, userdata, rc):
         global last_time
