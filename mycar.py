@@ -1,76 +1,88 @@
-import RPi.GPIO as GPIO
+# -*- coding: utf-8 -*-
 import time
+
+import RPi.GPIO as GPIO
 
 
 class MyCar(object):
-    def __init__(self, frontLeft, frontRight, backLeft, backRight):
-        self.frontLeft = frontLeft
-        self.frontRight = frontRight
-        self.backLeft = backLeft
-        self.backRight = backRight
+
+    def __init__(self, driver1, driver2, pilot1, pilot2):
+        self.driver1 = driver1
+        self.driver2 = driver2
+        self.pilot1 = pilot1
+        self.pilot2 = pilot2
         self.state = None
 
         GPIO.setmode(GPIO.BOARD)
 
         # 设置gpio口为输出
-        GPIO.setup(self.frontLeft, GPIO.OUT)
-        GPIO.setup(self.frontRight, GPIO.OUT)
-        GPIO.setup(self.backLeft, GPIO.OUT)
-        GPIO.setup(self.backRight, GPIO.OUT)
+        GPIO.setup(self.driver1, GPIO.OUT)
+        GPIO.setup(self.driver2, GPIO.OUT)
+        GPIO.setup(self.pilot1, GPIO.OUT)
+        GPIO.setup(self.pilot2, GPIO.OUT)
 
-    ## 前进
+        # 设置PWM对象
+        self.pwmDriver1 = GPIO.PWM(self.driver1, 100)
+        self.pwmDriver2 = GPIO.PWM(self.driver2, 100)
+        self.pwmPilot1 = GPIO.PWM(self.pilot1, 100)
+        self.pwmPilot2 = GPIO.PWM(self.pilot2, 100)
+
+        # 启动
+        self.pwmDriver1.start(0)
+        self.pwmDriver2.start(0)
+        self.pwmPilot1.start(0)
+        self.pwmPilot2.start(0)
+
+    # 前进
     def go_forward(self):
         if self.state == "Forward":
             return
-        GPIO.output(self.frontRight, GPIO.HIGH)
-        GPIO.output(self.backRight, GPIO.LOW)
-        GPIO.output(self.frontLeft, GPIO.LOW)
-        GPIO.output(self.backLeft, GPIO.HIGH)
+
+        self.pwmDriver1.ChangeDutyCycle(50)
+        self.pwmDriver2.ChangeDutyCycle(0)
         self.state = "Forward"
 
-    ## 后退
+    # 后退
     def go_back(self):
         if self.state == "Back":
             return
-        GPIO.output(self.frontRight, GPIO.LOW)
-        GPIO.output(self.backRight, GPIO.HIGH)
-        GPIO.output(self.frontLeft, GPIO.HIGH)
-        GPIO.output(self.backLeft, GPIO.LOW)
+        self.pwmDriver1.ChangeDutyCycle(0)
+        self.pwmDriver2.ChangeDutyCycle(50)
         self.state = "Back"
 
-
-## 左转
+    # 左转
     def to_left(self):
         if self.state == "ToLeft":
             return
-        GPIO.output(self.frontRight, GPIO.HIGH)
-        GPIO.output(self.backRight, GPIO.LOW)
-        GPIO.output(self.frontLeft, False)
-        GPIO.output(self.backLeft, False)
         self.state = "ToLeft"
+        self.pwmPilot1.ChangeDutyCycle(0)
+        self.pwmPilot2.ChangeDutyCycle(20)
+        time.sleep(1)
+        self.state = "DoneLeft"
 
-
-## 右转
+    # 右转
     def to_right(self):
         if self.state == "ToRight":
             return
-        GPIO.output(self.frontRight, False)
-        GPIO.output(self.backRight, False)
-        GPIO.output(self.frontLeft, GPIO.LOW)
-        GPIO.output(self.backLeft, GPIO.HIGH)
         self.state = "ToRight"
+        self.pwmPilot1.ChangeDutyCycle(20)
+        self.pwmPilot2.ChangeDutyCycle(0)
+        time.sleep(1)
+        self.state = "DoneRight"
 
     def stop(self):
         if self.state == "Stop":
             return
-        GPIO.output(self.frontRight, False)
-        GPIO.output(self.backRight, False)
-        GPIO.output(self.frontLeft, False)
-        GPIO.output(self.backLeft, False)
+        self.pwmDriver1.ChangeDutyCycle(0)
+        self.pwmDriver2.ChangeDutyCycle(0)
+        self.pwmPilot1.ChangeDutyCycle(0)
+        self.pwmPilot2.ChangeDutyCycle(0)
+
         self.state = "Stop"
 
-
-def __del__(self):
+    def __del__(self):
+        self.pwmDriver1.stop()
+        self.pwmDriver2.stop()
+        self.pwmPilot1.stop()
+        self.pwmPilot2.stop()
         GPIO.cleanup()
-        
-        
