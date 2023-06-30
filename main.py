@@ -34,8 +34,8 @@ if __name__ == '__main__':
     pilot2 = 12
     pilotPwm = 13
 
-    car = MyCar(driver1, driver2, driverPwm, pilot1, pilot2, pilotPwm)
     mqtt_client = MyClient(MQTT_BROKER_HOST, MQTT_BROKER_PORT, DEVICE_CODE, MQTT_USERNAME, MQTT_PASSWORD)
+    car = MyCar(mqtt_client, driver1, driver2, driverPwm, pilot1, pilot2, pilotPwm)
 
 
     def on_message_callback(client, userdata, message):
@@ -95,6 +95,7 @@ if __name__ == '__main__':
             elif topic.endswith('/s'):
                 car.go_back()
             elif topic.endswith('/n'):
+                logging.debug("准备停止")
                 car.stop()
 
     def on_my_disconnect(client, userdata, rc):
@@ -144,9 +145,6 @@ if __name__ == '__main__':
     # 在 Python 进程退出时终止子进程
     def cleanup():
         kill_ffmpeg_process()
-        mqtt_client.disconnect()
-        del car
-        logging.info("结束小车活动")
 
 
     mqtt_client.on_disconnect = on_my_disconnect
@@ -170,3 +168,7 @@ if __name__ == '__main__':
             last_time = current_time
 
         time.sleep(1)
+
+    mqtt_client.disconnect()
+    del car
+    logging.info("结束小车活动")

@@ -57,6 +57,9 @@ class MyClient(object):
         self.client.disconnect()
         self.connected = False
 
+    def loop(self):
+        self.client.loop()
+
     def subscribe(self, topic, on_message_callback):
         if self.connected:
             self.client.subscribe(topic)
