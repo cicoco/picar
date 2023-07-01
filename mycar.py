@@ -45,8 +45,8 @@ class MyCar(object):
             return
         self.driverState = "Forward"
 
-        GPIO.output(self.driver1, True)
-        GPIO.output(self.driver2, False)
+        GPIO.output(self.driver1, False)
+        GPIO.output(self.driver2, True)
 
         thread = threading.Thread(target=self.car_run, args=("Forward", max))
         thread.start()
@@ -68,8 +68,8 @@ class MyCar(object):
         if max <= 10:
             return
         self.driverState = "Back"
-        GPIO.output(self.driver1, False)
-        GPIO.output(self.driver2, True)
+        GPIO.output(self.driver1, True)
+        GPIO.output(self.driver2, False)
 
         thread = threading.Thread(target=self.car_run, args=("Back", max))
         thread.start()
@@ -79,8 +79,8 @@ class MyCar(object):
         if self.pilotState == "ToLeft":
             return
         self.pilotState = "ToLeft"
-        GPIO.output(self.pilot1, False)
-        GPIO.output(self.pilot2, True)
+        GPIO.output(self.pilot1, True)
+        GPIO.output(self.pilot2, False)
         self.pilot.ChangeDutyCycle(100)
 
     # 右转
@@ -88,8 +88,8 @@ class MyCar(object):
         if self.pilotState == "ToRight":
             return
         self.pilotState = "ToRight"
-        GPIO.output(self.pilot1, True)
-        GPIO.output(self.pilot2, False)
+        GPIO.output(self.pilot1, False)
+        GPIO.output(self.pilot2, True)
         self.pilot.ChangeDutyCycle(100)
 
     def stop_turn(self):
