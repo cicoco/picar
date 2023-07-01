@@ -91,12 +91,26 @@ if __name__ == '__main__':
                 logging.debug("执行停止命令完成")
 
             elif topic.endswith('/w'):
-                car.go_forward()
+                data = payload.get('data')
+                max = 100
+                if data is not None:
+                    max = data.get("a")
+                car.go_forward(max)
             elif topic.endswith('/s'):
-                car.go_back()
+                max = 5
+                data = payload.get('data')
+                if data is not None:
+                    max = data.get("a")
+                car.go_back(max)
             elif topic.endswith('/n'):
-                logging.debug("准备停止")
-                car.stop()
+                car.stop_run()
+            elif topic.endswith('/a'):
+                car.to_left()
+            elif topic.endswith('/d'):
+                car.to_right()
+            elif topic.endswith('/i'):
+                car.stop_turn()
+
 
     def on_my_disconnect(client, userdata, rc):
         global last_time
@@ -108,6 +122,7 @@ if __name__ == '__main__':
         mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/a")
         mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/d")
         mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/n")
+        mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/i")
 
 
     def on_my_connect(client, userdata, flags, rc):
@@ -118,6 +133,7 @@ if __name__ == '__main__':
         mqtt_client.subscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/a", on_message_callback)
         mqtt_client.subscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/d", on_message_callback)
         mqtt_client.subscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/n", on_message_callback)
+        mqtt_client.subscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/i", on_message_callback)
 
 
     def kill_ffmpeg_process():

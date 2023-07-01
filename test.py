@@ -53,7 +53,7 @@ try:
 
     # pwmDriver.ChangeDutyCycle(100)
 
-    time.sleep(1)
+    # time.sleep(1)
 
 except Exception as e:
     print(e)

@@ -15,7 +15,9 @@ class MyCar(object):
         self.pilot1 = pilot1
         self.pilot2 = pilot2
         self.pilotPwm = pilotPwm
-        self.state = None
+        self.driverState = None
+        self.pilotState = None
+        self.last_run_duty = 0
 
         self.mqtt_client = mqtt_client
 
@@ -38,66 +40,70 @@ class MyCar(object):
         self.pilot.start(0)
 
     # 前进
-    def go_forward(self):
-        if self.state == "Forward":
+    def go_forward(self, max):
+        if max <= 10:
             return
-        self.state = "Forward"
+        self.driverState = "Forward"
 
-        GPIO.output(self.driver1, False)
-        GPIO.output(self.driver2, True)
-
-        thread = threading.Thread(target=self.run_forward)
-        thread.start()
-
-    def run_forward(self):
-        duty_cycle = 10
-        while self.state == 'Forward':
-            duty_cycle += 5
-            if duty_cycle > 100:
-                duty_cycle = 100
-            self.driver.ChangeDutyCycle(duty_cycle)
-            time.sleep(0.1)
-        logging.debug("停止前进")
-
-    def run_backward(self):
-        duty_cycle = 10
-        while self.state == "Back":
-            duty_cycle += 5
-            if duty_cycle > 100:
-                duty_cycle = 100
-            self.driver.ChangeDutyCycle(duty_cycle)
-            time.sleep(0.1)
-        logging.debug("停止后退")
-
-    # # 后退
-    def go_back(self):
-        if self.state == "Back":
-            return
-        self.state = "Back"
         GPIO.output(self.driver1, True)
         GPIO.output(self.driver2, False)
 
-        thread = threading.Thread(target=self.run_backward)
+        thread = threading.Thread(target=self.car_run, args=("Forward", max))
+        thread.start()
+
+    def car_run(self, direction, max):
+        self.last_run_duty = 10
+        while self.driverState == f"{direction}":
+            if self.last_run_duty < max:
+                self.last_run_duty += 1
+            elif self.last_run_duty > max:
+                self.last_run_duty -= 1
+
+            self.driver.ChangeDutyCycle(self.last_run_duty)
+            time.sleep(0.1)
+        logging.debug(f"停止{direction}")
+
+    # # 后退
+    def go_back(self, max):
+        if max <= 10:
+            return
+        self.driverState = "Back"
+        GPIO.output(self.driver1, False)
+        GPIO.output(self.driver2, True)
+
+        thread = threading.Thread(target=self.car_run, args=("Back", max))
         thread.start()
 
     # 左转
-    def to_left(self, angle):
-        if self.state == "ToLeft":
+    def to_left(self):
+        if self.pilotState == "ToLeft":
             return
-        self.state = "ToLeft"
+        self.pilotState = "ToLeft"
+        GPIO.output(self.pilot1, False)
+        GPIO.output(self.pilot2, True)
+        self.pilot.ChangeDutyCycle(100)
 
     # 右转
-    def to_right(self, angle):
-        if self.state == "ToRight":
+    def to_right(self):
+        if self.pilotState == "ToRight":
             return
-        self.state = "ToRight"
+        self.pilotState = "ToRight"
+        GPIO.output(self.pilot1, True)
+        GPIO.output(self.pilot2, False)
+        self.pilot.ChangeDutyCycle(100)
 
-    def stop(self):
-        if self.state == "Stop":
+    def stop_turn(self):
+        if self.pilotState == 'stopTurn':
             return
-        self.state = "Stop"
-        self.driver.ChangeDutyCycle(0)
+        self.pilotState = 'stopTurn'
         self.pilot.ChangeDutyCycle(0)
+
+    def stop_run(self):
+        if self.driverState == "StopRun":
+            return
+        self.driverState = "StopRun"
+        self.last_run_duty = 0
+        self.driver.ChangeDutyCycle(self.last_run_duty)
         logging.debug("刹车")
 
     def __del__(self):
