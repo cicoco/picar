@@ -173,7 +173,14 @@ if __name__ == '__main__':
     mqtt_client.on_disconnect = on_my_disconnect
     mqtt_client.on_connect = on_my_connect
 
-    mqtt_client.connect()
+    connected = False
+    while not connected:
+        try:
+            mqtt_client.connect()
+            connected = True
+        except Exception as ex:
+            print(f"连接 MQTT 代理失败：{ex}")
+            time.sleep(1)
 
     atexit.register(cleanup)
 
