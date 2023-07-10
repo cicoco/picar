@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
         # 获取内网IP地址
         for item in ip_list:
+            print(item)
             if ':' not in item[4][0] and item[4][0].startswith('192.168.'):
                 ip_address = item[4][0]
                 break

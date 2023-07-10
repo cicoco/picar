@@ -3,7 +3,6 @@ import atexit
 import json
 import logging
 import os
-import socket
 import subprocess
 import time
 import uuid
@@ -165,18 +164,9 @@ if __name__ == '__main__':
 
 
     def get_inner_ip():
-        # 获取主机名
-        hostname = socket.gethostname()
-
-        # 获取IP地址列表
-        ip_list = socket.getaddrinfo(hostname, None)
-        ip_address = None
-
-        # 获取内网IP地址
-        for item in ip_list:
-            if ':' not in item[4][0] and item[4][0].startswith('192.168.'):
-                ip_address = item[4][0]
-                break
+        output = subprocess.check_output(['ifconfig', 'wlan0'])
+        # 解析输出结果，获取 WLAN0 接口的IP地址
+        ip_address = output.split(b'\n')[1].split()[1].decode()
         return ip_address
 
 
