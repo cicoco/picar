@@ -3,6 +3,7 @@ import atexit
 import json
 import logging
 import os
+import socket
 import subprocess
 import time
 import uuid
@@ -19,7 +20,7 @@ MQTT_BROKER_PORT = 1883
 
 running = True
 ffmpeg_process = None
-last_time = 0
+last_ping_time = 0
 
 if __name__ == '__main__':
 
@@ -113,8 +114,8 @@ if __name__ == '__main__':
 
 
     def on_my_disconnect(client, userdata, rc):
-        global last_time
-        last_time = 0
+        global last_ping_time
+        last_ping_time = 0
         mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/start")
         mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/stop")
         mqtt_client.unsubscribe(f"ws/{DEVICE_CODE}/v1/{PRODUCT_KEY}/command/w")
@@ -163,6 +164,22 @@ if __name__ == '__main__':
         kill_ffmpeg_process()
 
 
+    def get_inner_ip():
+        # 获取主机名
+        hostname = socket.gethostname()
+
+        # 获取IP地址列表
+        ip_list = socket.getaddrinfo(hostname, None)
+        ip_address = None
+
+        # 获取内网IP地址
+        for item in ip_list:
+            if ':' not in item[4][0] and item[4][0].startswith('192.168.'):
+                ip_address = item[4][0]
+                break
+        return ip_address
+
+
     mqtt_client.on_disconnect = on_my_disconnect
     mqtt_client.on_connect = on_my_connect
 
@@ -170,18 +187,30 @@ if __name__ == '__main__':
 
     atexit.register(cleanup)
 
+    sendIP = True
+
     while running:
         current_time = int(time.time() * 1000)
-        # 五分钟来一次
-        if mqtt_client.is_connect() and (current_time - last_time) > (1 * 60 * 1000):
-            payload = {
-                "mid": str(uuid.uuid4()),
-                "ts": current_time,
-                "sn": f"{DEVICE_CODE}",
-                "data": {"online": 1}
-            }
-            mqtt_client.publish(f"ws/sys/v1/{PRODUCT_KEY}/status", json.dumps(payload))
-            last_time = current_time
+        if mqtt_client.is_connect():
+            if sendIP:
+                ip_address = {
+                    "mid": str(uuid.uuid4()),
+                    "ts": current_time,
+                    "sn": f"{DEVICE_CODE}",
+                    "data": {"inner_ip": f"{get_inner_ip()}"}
+                }
+                mqtt_client.publish(f"ws/sys/v1/{PRODUCT_KEY}/properties", json.dumps(ip_address))
+                sendIP = False
+
+            if (current_time - last_ping_time) > (1 * 60 * 1000):
+                ping = {
+                    "mid": str(uuid.uuid4()),
+                    "ts": current_time,
+                    "sn": f"{DEVICE_CODE}",
+                    "data": {"online": 1}
+                }
+                mqtt_client.publish(f"ws/sys/v1/{PRODUCT_KEY}/status", json.dumps(ping))
+                last_ping_time = current_time
 
         time.sleep(1)
 
