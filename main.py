@@ -22,8 +22,7 @@ ffmpeg_process = None
 last_ping_time = 0
 
 if __name__ == '__main__':
-
-    logging.basicConfig(filename='all.log', level=logging.DEBUG)
+    logging.basicConfig(filename='/home/pi/car/all.log', level=logging.DEBUG)
     # logging.basicConfig(level=logging.DEBUG)
 
     driver1 = 15
@@ -42,6 +41,8 @@ if __name__ == '__main__':
         global running
         topic = message.topic
         payload = json.loads(message.payload.decode('utf-8'))
+
+        logging.debug(f"收到topic:{topic}")
 
         if topic is not None and payload is not None:
             if topic.endswith('/start'):
